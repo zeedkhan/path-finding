@@ -1,0 +1,20 @@
+.matrix-container {
+  box-shadow: -1px 0 1px 9px #374151;
+}
+
+.slider::-webkit-slider-thumb {
+  background: #04aa6d;
+}
+
+ul > li:hover,
+nav button:hover {
+  font-weight: bold;
+}
+
+nav button {
+  min-width: 8rem;
+}
+
+ul > li {
+  min-height: 2.25rem;
+}

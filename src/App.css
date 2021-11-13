@@ -1,0 +1,7 @@
+* {
+  margin: 0;
+}
+
+input[type="color"]{
+  background-color: transparent;
+}

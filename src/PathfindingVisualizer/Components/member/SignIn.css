@@ -1,0 +1,17 @@
+.signin-height {
+    height: 80vh;
+}
+
+.max-width-input {
+    max-width: 22rem;
+}
+
+.max-size-icons {
+    max-width: 2.5rem;
+    max-height: 2.5rem;
+}
+
+.max-size-cross {
+    max-width: 1.5rem;
+    max-height: 1.5rem;
+}
