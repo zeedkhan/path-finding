@@ -2,26 +2,33 @@ import store from '../store/store';
 import { setVisualizing } from '../features/slice/visualizeSlice';
 
 const dijkstra = (grid, startNode, finishNode) => {
-    const visitedNodesInOrder = []
+    const visitedNodesInOrder = [startNode]
+    
     startNode.distance = 0
 
     const unvisitedNodes = getAllNodes(grid)
 
-    while (!!unvisitedNodes.length) {
+    while (unvisitedNodes.length) {
         sortNodesByDistance(unvisitedNodes)
         const closestNode = unvisitedNodes.shift()
 
         if (closestNode.isWall) continue
 
-        if (closestNode.distance === Infinity) return visitedNodesInOrder
+        if (closestNode.distance === Infinity) {
+            return visitedNodesInOrder
+        }
+        
         closestNode.isVisited = true
         visitedNodesInOrder.push(closestNode)
-        if (closestNode === finishNode) return visitedNodesInOrder
+        if (closestNode === finishNode) {
+            return visitedNodesInOrder
+        }
         updateUnvisitedNeighbors(closestNode, grid)
-    }
+    } 
 }
 
 const sortNodesByDistance = (unvisitedNodes) => {
+    // unvisitedNodes.sort((nodeA, nodeB) => nodeA.weight.g - nodeB.weight.g)
     unvisitedNodes.sort((nodeA, nodeB) => nodeA.distance - nodeB.distance)
 }
 

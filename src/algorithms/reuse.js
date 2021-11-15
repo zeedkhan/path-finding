@@ -14,6 +14,8 @@ export const notFindExit = (initialPos, algorithm) => {
             var [current] = unvisitedNodes.shift();
         } else if (algorithm === 'dfs') {
             var [current] = unvisitedNodes.pop();
+        } else if (algorithm === 'astar') {
+            var [current] = unvisitedNodes.pop();
         }
 
         let { row, col, isWall, isFinish } = current;

@@ -10,73 +10,93 @@ function astart(grid, startNode, finishNode, weight) {
     const visitedNodesInOrder = []
     const path = []
     startNode.distance = 0
-        
+
+    // const destinationSize = finishNode.length;
+    let reachDestination = 0
+
     const unvisitedNodes = [startNode]
 
-    while (unvisitedNodes.length) {
-        const current = unvisitedNodes.sort((nodeA, nodeB) => nodeA.weight.f - nodeB.weight.f).shift();
+    const destinationSet = new Set()
 
-        if (current.isWall) continue
+    for (let node in finishNode) {
+        const { row, col } = finishNode[node]
+        destinationSet.add(`${row},${col}`)
+    }
 
-        if (current === finishNode) {
-            console.log('finsihed', current)
-            return visitedNodesInOrder
-        }
+    for (let node in finishNode) {
+        while (unvisitedNodes.length) {
 
-        if (!current.isVisited) {
-            current.isVisited = true
-            visitedNodesInOrder.push(current)
-            path.push(current)
+            const current = unvisitedNodes
+                .sort((nodeA, nodeB) => nodeA.weight.g - nodeB.weight.g)
+                .shift()
 
-            const { row, col } = current
+            if (current.isWall) continue
 
-            if (row + 1 >= 0 && row + 1 < grid.length) {
-                const nextNode = grid[row + 1][col]
-                
-                nextNode.weight.f = weight[row][col] + current.weight.f
-                // nextNode.distance = current.distance + 1
+            if (!current.isVisited) {
+                current.isVisited = true
+                visitedNodesInOrder.push(current)
 
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                if (destinationSet.has(current.row + ',' + current.col)) {
+                    reachDestination += 1
+                    continue
                 }
 
-                unvisitedNodes.push(nextNode)
-            }
-
-            if (row - 1 >= 0 && row - 1 < grid.length) {
-                const nextNode = grid[row - 1][col]
-                // nextNode.distance = current.distance + 1
-
-                nextNode.weight.f = weight[row][col] + current.weight.f
-
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                if (destinationSet.size == reachDestination) {
+                    return visitedNodesInOrder
                 }
-                unvisitedNodes.push(nextNode)
-            }
 
-            if (col + 1 >= 0 && col + 1 < grid[0].length) {
-                const nextNode = grid[row][col + 1]
-                // nextNode.distance = current.distance + 1
-                
-                nextNode.weight.f = weight[row][col] + current.weight.f
+                path.push(current)
 
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                const { row, col } = current
+
+                if (row + 1 >= 0 && row + 1 < grid.length) {
+                    const nextNode = grid[row + 1][col]
+
+                    nextNode.weight.h = weight[row][col] + current.weight.g
+                    // nextNode.distance = current.distance + 1
+
+                    if (!nextNode.isVisited) {
+                        nextNode.previousNode = current
+                    }
+
+                    unvisitedNodes.push(nextNode)
                 }
-                unvisitedNodes.push(nextNode)
-            }
 
-            if (col - 1 >= 0 && col - 1 < grid[0].length) {
-                const nextNode = grid[row][col - 1]
-                // nextNode.distance = current.distance + 1
+                if (row - 1 >= 0 && row - 1 < grid.length) {
+                    const nextNode = grid[row - 1][col]
+                    // nextNode.distance = current.distance + 1
 
-                nextNode.weight.f = weight[row][col] + current.weight.f
+                    nextNode.weight.h = weight[row][col] + current.weight.g
 
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                    if (!nextNode.isVisited) {
+                        nextNode.previousNode = current
+                    }
+                    unvisitedNodes.push(nextNode)
                 }
-                unvisitedNodes.push(nextNode)
+
+                if (col + 1 >= 0 && col + 1 < grid[0].length) {
+                    const nextNode = grid[row][col + 1]
+                    // nextNode.distance = current.distance + 1
+
+                    nextNode.weight.h = weight[row][col] + current.weight.g
+
+                    if (!nextNode.isVisited) {
+                        nextNode.previousNode = current
+                    }
+                    unvisitedNodes.push(nextNode)
+                }
+
+                if (col - 1 >= 0 && col - 1 < grid[0].length) {
+                    const nextNode = grid[row][col - 1]
+                    // nextNode.distance = current.distance + 1
+
+                    nextNode.weight.h = weight[row][col] + current.weight.g
+
+                    if (!nextNode.isVisited) {
+                        nextNode.previousNode = current
+                    }
+                    unvisitedNodes.push(nextNode)
+                }
             }
         }
     }
@@ -120,6 +140,11 @@ const animate = (visitedNodesInOrder, nodesInShortestPathOrder) => {
 
 const animateShortestPath = (nodesInShortestPathOrder) => {
     for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
+        
+        // if (node[i].isFinish) {
+        //     document.getElementById(`node-${node[i].row}-${node[i].col}`).classList.add('node-finish');
+        // }
+
         setTimeout(() => {
             const node = nodesInShortestPathOrder[i]
             if (node !== null) {
@@ -139,24 +164,36 @@ const animateShortestPath = (nodesInShortestPathOrder) => {
 const getNodesInShortestPathOrder = (finishNode) => {
     const nodesInShortestPathOrder = []
     let currentNode = finishNode
-    while (currentNode !== null) {
-        nodesInShortestPathOrder.unshift(currentNode)
-        currentNode = currentNode.previousNode
-    }
 
+    for (let node in finishNode) {
+        currentNode = finishNode[node]
+        while (currentNode !== null) {
+            nodesInShortestPathOrder.unshift(currentNode)
+            currentNode = currentNode.previousNode
+        }
+    }
     return nodesInShortestPathOrder
 }
 
 export function visualizeAstar(grid, initPosition, weight) {
-    
     const { startRow, startCol, finishRow, finishCol } = initPosition
+
+    const findFinish = []
+
+    for (let row = 0; row < grid.length; row++) {
+        for (let col = 0; col < grid[row].length; col++) {
+            if (grid[row][col].isFinish === true) {
+                findFinish.push(grid[row][col])
+            }
+        }
+    }
 
     const startNode = grid[startRow][startCol]
     const finishNode = grid[finishRow][finishCol]
 
-    const visitedNodesInOrder = astart(grid, startNode, finishNode, weight)
-    console.log(finishNode)
-    const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode)
+    const visitedNodesInOrder = astart(grid, startNode, findFinish, weight)
+    // const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode)
+    const nodesInShortestPathOrder = getNodesInShortestPathOrder(findFinish)
 
     /*  Set play state in redux to false*/
     store.dispatch(setVisualizing(true))

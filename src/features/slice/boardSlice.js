@@ -1,9 +1,10 @@
-import createSlice  from '../createSlice'
+import createSlice from '../createSlice'
 
 export const boardSlice = createSlice({
     name: 'board',
     initialState: {
-        grid: []
+        grid: [],
+        size: { numRow: 20, numCol: 50 }
     },
     reducers: {
         setGrid: (state, action) => {
@@ -12,8 +13,9 @@ export const boardSlice = createSlice({
     }
 })
 
-export const { setGrid } = boardSlice.actions;
+export const { setGrid } = boardSlice.actions
 
-export const selectGrid = (state) => state.board.grid;
+export const selectGrid = (state) => state.board.grid
+export const selectSizeGrid = (state) => state.board.grid
 
-export default boardSlice.reducer;
+export default boardSlice.reducer

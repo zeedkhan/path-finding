@@ -1,24 +1,54 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { visualizeDfs } from '../../algorithms/dfs'
 import { visualizeBfs } from '../../algorithms/bfs'
 import { algorithmList } from '../../algorithms/list'
 import { visualizeDijkstra } from '../../algorithms/dijkstra'
 import { visualizeAstar } from '../../algorithms/astar'
-import { getInitialGrid } from '../Grid/grid'
+import { addDestination, getInitialGrid, removeDestination } from '../Grid/grid'
 import { useSelector } from 'react-redux'
 import Loader from './utils/Loader'
 import { getSpeed, setSpeed } from '../../features/slice/speedSlice'
-import { getVisualizing } from '../../features/slice/visualizeSlice'
+import {
+    getVisualizing,
+    setAlgorithm,
+    getAlgorithm,
+} from '../../features/slice/visualizeSlice'
 import { useDispatch } from 'react-redux'
 import { updateGridStore } from '../../firebase/firestore'
-import { AiOutlineLogout } from 'react-icons/ai'
+import {
+    AiOutlineLogout,
+    AiOutlineMinusCircle,
+    AiOutlinePlusCircle
+} from 'react-icons/ai'
 import { logOut } from '../../firebase/auth'
+import { supportWeight } from '../../algorithms/list'
 
 // css
 import Login from './member/Login'
-import Modal from './utils/UploadNode'
+import './Nav.css'
+
+// import Modal from './utils/UploadNode'
 
 function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
+    // init show weight
+    useEffect(() => {
+        document.getElementById('weight-toggle').checked = true
+    }, [])
+
+    const [showWeight, setShowWeight] = useState(true)
+    const currentAlgorithm = useSelector(getAlgorithm)
+
+    useEffect(() => {
+        const weightTogger = document.getElementById('weight-toggle')
+        if (currentAlgorithm) {
+            // handleToggerWeight
+            weightTogger.checked = supportWeight(currentAlgorithm)
+            if (showWeight != weightTogger.checked) {
+                handleToggerWeight()
+            }
+        }
+    }, [currentAlgorithm])
+
     const dispatch = useDispatch()
 
     const [isOpenAlgo, setIsOpenAlgo] = useState(false)
@@ -57,44 +87,88 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
         }
     }
 
+    const handleToggerWeight = () => {
+        const trigger = document.getElementById('weight-toggle')
+
+        if (currentAlgorithm === 'Depth First Search' && trigger.checked) {
+            trigger.checked = false
+        } else if (currentAlgorithm !== 'Depth First Search' && !trigger.checked) {
+            trigger.checked = true
+        } else if (currentAlgorithm === 'A* Search' && trigger.checked) {
+            trigger.checked = true
+        }  else if (currentAlgorithm === 'A* Search' && !trigger.checked) {
+            trigger.checked = false
+        } else {
+            trigger.checked = !trigger.checked
+        }
+
+        grid.map((vertical, row) => {
+            vertical.map((node, col) => {
+                const currentNode = document.getElementById(
+                    `node-${row}-${col}`
+                )
+                if (trigger.checked) {
+                    currentNode.classList.add(`weight-${weight[row][col]}`)
+                } else {
+                    currentNode.classList.remove(`weight-${weight[row][col]}`)
+                }
+            })
+        })
+
+        setShowWeight(trigger.checked)
+    }
+
     const handleVisual = (algo, grid, initPosition, weight) => {
+        dispatch(setAlgorithm(algo))
 
         switch (algo) {
             case 'Depth First Search':
                 visualizeDfs(grid, initPosition)
                 break
             case 'Breadth First Search':
-                visualizeBfs(grid, initPosition)
+                visualizeBfs(grid, initPosition, weight, showWeight)
                 break
             case "Dijkstra's":
                 visualizeDijkstra(grid, initPosition)
                 break
-            case "A* Search":
+            case 'A* Search':
                 visualizeAstar(grid, initPosition, weight)
         }
     }
 
-    const handleClear = () => {
-        const randomG = () => Math.floor(Math.random() * Math.max(100, Math.max(1)));
+    const clearBoard = () => {
+        // new implement should create export function in reuse
+        const randomG = () =>
+            Math.ceil(Math.random() * Math.max(10, Math.min(1)))
+
         const grid = getInitialGrid(numRow, numCol, initPosition, randomG)
-        
-        grid.grid.map((vertical) => {
-            vertical.map((node) => {
-                document
-                    .getElementById(`node-${node.row}-${node.col}`)
-                    .classList.remove(
-                        'node-shortest-path',
-                        'node-visited',
-                        'node-wall'
-                    )
+
+        if (!showWeight) {
+            document.getElementById('weight-toggle').checked = true
+        }
+
+        grid.grid.map((vertical, row) => {
+            vertical.map((node, col) => {
+                const rangeWeight = grid.weight[row][col].rangeWeight
+
+                const currentNode = document.getElementById(
+                    `node-${node.row}-${node.col}`
+                )
+
+                currentNode.classList.remove(
+                    'node-shortest-path',
+                    'node-visited',
+                    'node-wall'
+                )
+                // update weight pros
+                weight[row][col] = grid.weight[row][col]
+
+                currentNode.classList.add(rangeWeight)
+
                 if (node.isStart) {
-                    document
-                        .getElementById(`node-${node.row}-${node.col}`)
-                        .classList.add('node-start')
+                    currentNode.classList.add('node-start')
                 } else if (node.isFinish) {
-                    document
-                        .getElementById(`node-${node.row}-${node.col}`)
-                        .classList.add('node-finish')
+                    currentNode.classList.add('node-finish')
                 }
             })
         })
@@ -104,23 +178,39 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
 
     const clearPath = () => {
         const newGrid = grid.slice()
-        newGrid.map((vertical) => {
-            vertical.map((node) => {
-                node.distance = Infinity
-                if (node.isVisited) {
-                    node.isVisited = !node.isVisited
+
+        newGrid.map((vertical, row) => {
+            vertical.map((node, col) => {
+                // weight come from props
+                const rangeWeight = weight[row][col]
+
+                node = {
+                    ...node,
+                    distance: Infinity,
+                    weight: {
+                        ...node.weight,
+                        h: 0,
+                    },
+                    isVisited: false,
+                    rangeWeight:
+                        !node.isStart && !node.isFinish ? rangeWeight : ''
                 }
-                document
-                    .getElementById(`node-${node.row}-${node.col}`)
-                    .classList.remove('node-shortest-path', 'node-visited')
+
+                const currentNode = document.getElementById(
+                    `node-${node.row}-${node.col}`
+                )
+
+                currentNode.classList.remove(
+                    'node-shortest-path',
+                    'node-visited'
+                )
+
                 if (node.isStart) {
-                    document
-                        .getElementById(`node-${node.row}-${node.col}`)
-                        .classList.add('node-start')
+                    currentNode.classList.add('node-start')
                 } else if (node.isFinish) {
-                    document
-                        .getElementById(`node-${node.row}-${node.col}`)
-                        .classList.add('node-finish')
+                    currentNode.classList.add('node-finish')
+                } else {
+                    currentNode.classList.add(`weight-${rangeWeight}`)
                 }
             })
         })
@@ -168,9 +258,8 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
                             })}
                         </div>
                     </button>
-
                     <button
-                        onClick={() => handleClear()}
+                        onClick={() => clearBoard()}
                         disabled={visualizing}
                         className="block h-full overflow-hidden focus:outline-none hover:text-black hover:bg-white pl-2 pr-2">
                         Clear Board
@@ -205,6 +294,30 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
                             />
                         </div>
                     </button>
+                    <div className="flex flex-col justify-center">
+                        <div className="ml-4 mr-4 toggle-container relative align-middle select-none transition duration-500 ease-in">
+                            <input
+                                type="checkbox"
+                                name="toggle"
+                                id="weight-toggle"
+                                onClick={() => handleToggerWeight()}
+                                disabled={visualizing}
+                                className="pointer-none toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none"
+                            />
+                            <label
+                                for="weight-toggle"
+                                onClick={() => handleToggerWeight()}
+                                disabled={visualizing}
+                                className="pointer-none toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer"></label>
+                        </div>
+                        <label
+                            for="weight-toggle"
+                            onClick={() => handleToggerWeight()}
+                            disabled={visualizing}
+                            className="cursor-pointer text-xs mt-1 text-white">
+                            Using weight
+                        </label>
+                    </div>
                     <button
                         disabled={visualizing}
                         className="hover:text-black hover:bg-white pl-2 pr-2"
@@ -217,7 +330,10 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
                 </div>
             </nav>
 
-            <div className={`${!isOpenSetting ? 'hidden' : 'block'} absolute w-full h-1/2 overflow-hidden top-14`}>
+            <div
+                className={`${
+                    !isOpenSetting ? 'hidden' : 'block'
+                } absolute w-full h-1/2 overflow-hidden top-14`}>
                 <div
                     className={`z-10 text-white transition duration-500 h-full w-1/5 right-0 top-0 absolute transform bg-gray-700 bg-opacity-90 ${
                         isOpenSetting
@@ -225,6 +341,29 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
                             : 'translate-x-full opacity-0'
                     }`}>
                     <ul className="flex flex-col justify-around w-full items-center h-1/2">
+                        <li className="cursor-pointer hover:bg-gray-700 h-10 w-60 rounded-full flex items-center justify-center">
+                            {/* should have a modal to set weather start, finish */}
+                            <button>
+                                <div className="flex flex-row justify-center items-center">
+                                    <AiOutlinePlusCircle
+                                        onClick={() =>
+                                            setGrid(addDestination(grid))
+                                        }
+                                        className="mr-5 w-7 h-7 hover:bg-white hover:text-black rounded-full"
+                                    />
+                                    <p>destination</p>
+                                    <AiOutlineMinusCircle
+                                        onClick={() =>
+                                            setGrid(
+                                                removeDestination(grid, weight)
+                                            )
+                                        }
+                                        className="ml-5 w-7 h-7 hover:bg-white hover:text-black rounded-full"
+                                    />
+                                </div>
+                            </button>
+                        </li>
+
                         <li className="flex justify-center items-center rounded-full hover:bg-gray-700 w-1/2 h-10 cursor-pointer">
                             <div className="self-center left-0 block flex flex-row">
                                 {loading && <Loader display="block" />}
@@ -245,7 +384,9 @@ function Nav({ initPosition, setGrid, numRow, numCol, grid, weight }) {
                         </li>
                         <li className="cursor-pointer hover:bg-gray-700 h-10 w-60 rounded-full flex items-center justify-center">
                             {/* should have a modal to set weather start, finish */}
-                            <button /*onClick={() => setChooseImage(!chooseImage)}*/
+                            <button
+                                onClick={() => window.alert('Future feature')}
+                                /*onClick={() => setChooseImage(!chooseImage)}*/
                             >
                                 Choose Image for node...
                             </button>

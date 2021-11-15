@@ -13,6 +13,7 @@ import {
     signInWithEmailAndPassword
 } from 'firebase/auth'
 import { login } from '../features/slice/userSlice'
+import { selectUser } from '../features/slice/userSlice'
 import store from '../store/store'
 import { setPhotoUser, getDocs, defaultUserSetting } from './firestore'
 
@@ -116,12 +117,19 @@ const register = (email, password) => {
 }
 
 const logOut = () => {
-    signOut(auth).then(() => {
-        // already sign out
-        console.log('already sign out')
-    }).then(() => {
-        window.location.reload()
-    })
+    const currentStore = store.getState(selectUser)
+    
+    if (currentStore.user.user != null) {
+        signOut(auth).then(() => {
+            // already sign out
+            console.log('already sign out')
+        }).then(() => {
+            window.location.reload()
+        })
+    } else {
+        window.alert("Please login..")
+    }
+
 }
 
 const authChanged = () => {
