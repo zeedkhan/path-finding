@@ -1,73 +1,163 @@
 import { notFindExit } from './reuse'
 import store from '../store/store'
-import { setVisualizing } from '../features/slice/visualizeSlice'
+import {
+    setVisualizing
+} from '../features/slice/visualizeSlice'
 
 let initialPos = {}
 
-function bfs(grid, startNode, finishNode) {
+function bfs(grid, startNode, finishNode, weight, isWeight) {
     initialPos = { grid: grid, startNode, finishNode }
+
+    const isWeightNow = isWeight
+
+    console.log(isWeightNow)
 
     const visitedNodesInOrder = []
     const path = []
     startNode.distance = 0
+
+    let reachDestination = 0
+
     const unvisitedNodes = [startNode]
 
-    while (unvisitedNodes.length) {
-        const current = unvisitedNodes.shift()
+    const destinationSet = new Set()
 
-        if (current.isWall) continue
+    for (let node in finishNode) {
+        const { row, col } = finishNode[node]
+        destinationSet.add(`${row},${col}`)
+    }
 
-        if (current === finishNode) {
-            console.log('finsihed', current)
-            return visitedNodesInOrder
-        }
+    for (let node in finishNode) {
+        while (unvisitedNodes.length) {
+            if (isWeightNow) {
+                const current = unvisitedNodes
+                    .sort((nodeA, nodeB) => nodeA.weight.g - nodeB.weight.g)
+                    .shift()
 
-        if (!current.isVisited) {
-            current.isVisited = true
-            visitedNodesInOrder.push(current)
-            path.push(current)
+                if (current.isWall) continue
 
-            const { row, col } = current
+                if (!current.isVisited) {
+                    current.isVisited = true
+                    visitedNodesInOrder.push(current)
 
-            if (row + 1 >= 0 && row + 1 < grid.length) {
-                const nextNode = grid[row + 1][col]
-                nextNode.distance = current.distance + 1
+                    if (destinationSet.has(current.row + ',' + current.col)) {
+                        reachDestination += 1
+                        continue
+                    }
 
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                    if (destinationSet.size == reachDestination) {
+                        return visitedNodesInOrder
+                    }
+
+                    path.push(current)
+
+                    const { row, col } = current
+
+                    if (row + 1 >= 0 && row + 1 < grid.length) {
+                        const nextNode = grid[row + 1][col]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (row - 1 >= 0 && row - 1 < grid.length) {
+                        const nextNode = grid[row - 1][col]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (col + 1 >= 0 && col + 1 < grid[0].length) {
+                        const nextNode = grid[row][col + 1]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (col - 1 >= 0 && col - 1 < grid[0].length) {
+                        const nextNode = grid[row][col - 1]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
                 }
+            } else {
+                const current = unvisitedNodes.shift()
 
-                unvisitedNodes.push(nextNode)
-            }
+                if (current.isWall) continue
 
-            if (row - 1 >= 0 && row - 1 < grid.length) {
-                const nextNode = grid[row - 1][col]
-                nextNode.distance = current.distance + 1
+                if (!current.isVisited) {
+                    current.isVisited = true
+                    visitedNodesInOrder.push(current)
 
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
+                    if (destinationSet.has(current.row + ',' + current.col)) {
+                        reachDestination += 1
+                        continue
+                    }
+
+                    if (destinationSet.size == reachDestination) {
+                        return visitedNodesInOrder
+                    }
+
+                    path.push(current)
+
+                    const { row, col } = current
+
+                    if (row + 1 >= 0 && row + 1 < grid.length) {
+                        const nextNode = grid[row + 1][col]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (row - 1 >= 0 && row - 1 < grid.length) {
+                        const nextNode = grid[row - 1][col]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (col + 1 >= 0 && col + 1 < grid[0].length) {
+                        const nextNode = grid[row][col + 1]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
+
+                    if (col - 1 >= 0 && col - 1 < grid[0].length) {
+                        const nextNode = grid[row][col - 1]
+                        nextNode.distance = current.distance + 1
+
+                        if (!nextNode.isVisited) {
+                            nextNode.previousNode = current
+                        }
+                        unvisitedNodes.push(nextNode)
+                    }
                 }
-                unvisitedNodes.push(nextNode)
-            }
-
-            if (col + 1 >= 0 && col + 1 < grid[0].length) {
-                const nextNode = grid[row][col + 1]
-                nextNode.distance = current.distance + 1
-
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
-                }
-                unvisitedNodes.push(nextNode)
-            }
-
-            if (col - 1 >= 0 && col - 1 < grid[0].length) {
-                const nextNode = grid[row][col - 1]
-                nextNode.distance = current.distance + 1
-
-                if (!nextNode.isVisited) {
-                    nextNode.previousNode = current
-                }
-                unvisitedNodes.push(nextNode)
             }
         }
     }
@@ -110,6 +200,9 @@ const animate = (visitedNodesInOrder, nodesInShortestPathOrder) => {
 }
 
 const animateShortestPath = (nodesInShortestPathOrder) => {
+
+    console.log('bfs shorstest move', nodesInShortestPathOrder.length);
+
     for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
         setTimeout(() => {
             const node = nodesInShortestPathOrder[i]
@@ -130,22 +223,42 @@ const animateShortestPath = (nodesInShortestPathOrder) => {
 const getNodesInShortestPathOrder = (finishNode) => {
     const nodesInShortestPathOrder = []
     let currentNode = finishNode
-    while (currentNode !== null) {
-        nodesInShortestPathOrder.unshift(currentNode)
-        currentNode = currentNode.previousNode
+
+    for (let node in finishNode) {
+        currentNode = finishNode[node]
+        while (currentNode !== null) {
+            nodesInShortestPathOrder.unshift(currentNode)
+            currentNode = currentNode.previousNode
+        }
     }
 
     return nodesInShortestPathOrder
 }
 
-export function visualizeBfs(grid, initPosition) {
+export function visualizeBfs(grid, initPosition, weight, isWeight) {
     const { startRow, startCol, finishRow, finishCol } = initPosition
 
-    const startNode = grid[startRow][startCol]
-    const finishNode = grid[finishRow][finishCol]
+    const findFinish = []
 
-    const visitedNodesInOrder = bfs(grid, startNode, finishNode)
-    const nodesInShortestPathOrder = getNodesInShortestPathOrder(finishNode)
+    for (let row = 0; row < grid.length; row++) {
+        for (let col = 0; col < grid[row].length; col++) {
+            if (grid[row][col].isFinish === true) {
+                findFinish.push(grid[row][col])
+            }
+        }
+    }
+
+    const startNode = grid[startRow][startCol]
+    // const finishNode = grid[finishRow][finishCol]
+
+    const visitedNodesInOrder = bfs(
+        grid,
+        startNode,
+        findFinish,
+        weight,
+        isWeight
+    )
+    const nodesInShortestPathOrder = getNodesInShortestPathOrder(findFinish)
 
     /*  Set play state in redux to false*/
     store.dispatch(setVisualizing(true))

@@ -10,9 +10,14 @@ import Nav from './Components/Nav'
 import './PathfindingVisualizer.css'
 import { useDispatch, useSelector } from 'react-redux'
 import { selectSignIn } from '../features/slice/signInModalSlice'
-import {getDocs} from "../firebase/firestore"
+import { getDocs } from '../firebase/firestore'
 import { selectUser } from '../features/slice/userSlice'
 import { setSpeed } from '../features/slice/speedSlice'
+import {
+    getAlgorithm,
+    getVisualizing,
+    getSupportWeight
+} from '../features/slice/visualizeSlice'
 
 /* INIT WHEN ANOMYNOUS */
 const START_NODE_ROW = 10
@@ -23,12 +28,17 @@ const numRow = 20
 const numCol = 50
 
 function PathfindingVisual() {
-
     const dispatch = useDispatch()
 
     const [grid, setGrid] = useState([])
     const [weight, setWeight] = useState([])
     const loginModal = useSelector(selectSignIn)
+
+    const playState = useSelector(getVisualizing)
+    const currentAlgo = useSelector(getAlgorithm)
+    
+    const supportWeight = useSelector(getSupportWeight)
+
     const [mouseIsPressed, setMouseIsPressed] = useState(false)
     const [initPosition, setInitialPosition] = useState({
         startRow: START_NODE_ROW,
@@ -40,27 +50,32 @@ function PathfindingVisual() {
     const [startNode, setStartNode] = useState(false)
     const [finishNode, setFinishNode] = useState(false)
 
-    const user = useSelector(selectUser);
+    const user = useSelector(selectUser)
 
-    useEffect( async () => {
-        const randomG = () => Math.floor(Math.random() * Math.max(100, Math.max(1)));
+    /* Range weight */
+    useEffect(async () => {
+        // new implement should create export function in reuse
+        const randomG = () =>
+            Math.ceil(Math.random() * Math.max(10, Math.min(1)))
+
         const grid = getInitialGrid(numRow, numCol, initPosition, randomG)
-        
+
         // save grid to redux
         if (user) {
-            const data = await getDocs();
-            setGrid(Object.values(data.grid));
+            const data = await getDocs()
+            setGrid(Object.values(data.grid))
             dispatch(setSpeed(data.speed))
             // find start and finish
             setInitialPosition(data.initPosition)
         } else {
             setWeight(grid.weight)
-            setGrid(grid.grid);
+            setGrid(grid.grid)
         }
+        
     }, [user])
 
     const handleMouseUp = () => {
-        setMouseIsPressed(false)    
+        setMouseIsPressed(false)
     }
 
     const handleMouseDown = (row, col) => {
@@ -73,7 +88,7 @@ function PathfindingVisual() {
             return setFinishNode(true)
         }
 
-        const newGrid = getNewGridWithWallToggled(grid, row, col)
+        const newGrid = getNewGridWithWallToggled(grid, row, col, weight)
         // save grid to redux
         setGrid(newGrid)
         setStartNode(false)
@@ -90,20 +105,20 @@ function PathfindingVisual() {
                 startRow: row,
                 startCol: col
             })
-            
+
             setGrid(newGrid)
         } else if (finishNode) {
             const newGrid = moveFinish(grid, row, col)
+
             setInitialPosition({
                 ...initPosition,
                 finishRow: row,
                 finishCol: col
             })
-
+            
             setGrid(newGrid)
         } else {
-            
-            const newGrid = getNewGridWithWallToggled(grid, row, col)
+            const newGrid = getNewGridWithWallToggled(grid, row, col, weight)
             setGrid(newGrid)
         }
     }
@@ -116,8 +131,27 @@ function PathfindingVisual() {
                 weight={weight}
                 setGrid={setGrid}
                 initPosition={initPosition}></Nav>
+
+            <div className={`${loginModal && 'filter blur-lg'} flex text-center text-lg justify-center items-center mt-4`}>
+                {playState ? (
+                    <div>
+                        <p>
+                            Visualizing&nbsp;
+                            <strong className="font-bold italic">{currentAlgo}</strong>
+                            &nbsp;is
+                            <strong className="font-bold italic">
+                                {supportWeight ? ' support' : ' not suport'}
+                            </strong>
+                            &nbsp;weight
+                        </p>
+                    </div>
+                ) : (
+                    'Choose Algorithms for visualizing...'
+                )}
+            </div>
+
             <div
-                className={`flex flex-row justify-center m-5 mt-16 ${
+                className={`flex flex-row justify-center m-5 mt-6 ${
                     loginModal && 'filter blur-lg'
                 }`}>
                 <table className="grid matrix-container">
@@ -132,10 +166,12 @@ function PathfindingVisual() {
                                         isStart,
                                         isWall,
                                         isMove,
+                                        rangeWeight
                                     } = node
                                     return (
                                         <Node
                                             key={nodeIdx}
+                                            rangeWeight={rangeWeight}
                                             col={col}
                                             isFinish={isFinish}
                                             isStart={isStart}
@@ -148,9 +184,7 @@ function PathfindingVisual() {
                                             onMouseEnter={(row, col) =>
                                                 handleMouseEnter(row, col)
                                             }
-                                            onMouseUp={() =>
-                                                handleMouseUp()
-                                            }
+                                            onMouseUp={() => handleMouseUp()}
                                             row={row}></Node>
                                     )
                                 })}

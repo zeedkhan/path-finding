@@ -112,3 +112,44 @@
     transform: scale(1)
   }
 }
+
+
+.weight-1 {
+  background-color: #DEE1E2;
+}
+
+.weight-2 {
+  background-color: #C8CCCE;
+}
+
+.weight-3 {
+  background-color: #B7BABC;
+}
+
+.weight-4 {
+  background-color: #A7ABAF;  
+}
+
+.weight-5 {
+  background-color: #989DA3;
+}
+
+.weight-6 {
+  background-color: #82878E;
+}
+
+.weight-7 {
+  background-color: #BC939D;  
+}
+
+.weight-8 {
+  background-color: #64696D;
+}
+
+.weight-9 {
+  background-color: #42464C;
+}
+
+.weight-10 {
+  background-color: #363D44;
+}

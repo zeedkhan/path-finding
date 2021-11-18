@@ -7,8 +7,7 @@ import {
     getDoc,
     doc,
     setDoc,
-    updateDoc,
-    Timestamp
+    updateDoc
 } from 'firebase/firestore'
 import { selectUser } from '../features/slice/userSlice'
 import store from '../store/store'
@@ -78,15 +77,20 @@ const setPhotoUser = (email) => {
 const updateGridStore = async (board, pos) => {
     const currentStore = store.getState(selectUser)
 
-    const docRef = doc(db, 'user', currentStore.user.user.email)
+    if (currentStore.user.user != null) {
+        const docRef = doc(db, 'user', currentStore.user.user.email)
+    
+        const addKeyInBoard = Object.fromEntries(Object.entries(board))
+    
+        await updateDoc(docRef, {
+            grid: addKeyInBoard,
+            initPosition: pos,
+            speed: currentStore.speed.speed
+        })
+    } else {
+        window.alert('Please login before save!')
+    }
 
-    const addKeyInBoard = Object.fromEntries(Object.entries(board))
-
-    await updateDoc(docRef, {
-        grid: addKeyInBoard,
-        initPosition: pos,
-        speed: currentStore.speed.speed
-    })
 }
 
 export { setPhotoUser, defaultUserSetting, getDocs, updateGridStore }
