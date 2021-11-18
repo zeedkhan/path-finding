@@ -200,6 +200,9 @@ const animate = (visitedNodesInOrder, nodesInShortestPathOrder) => {
 }
 
 const animateShortestPath = (nodesInShortestPathOrder) => {
+
+    console.log('bfs shorstest move', nodesInShortestPathOrder.length);
+
     for (let i = 0; i < nodesInShortestPathOrder.length; i++) {
         setTimeout(() => {
             const node = nodesInShortestPathOrder[i]

@@ -29,15 +29,22 @@ export const getInitialGrid = (row, col, initPosition, randomG) => {
             const startPos = r === startRow && c === startCol
             const finishPos = r === finishRow && c === finishCol
 
-            const testRan = randomG()
+            // const randomg = Math.floor(Math.random() * Math.max(1, Math.min(3)))
+            // const randomh = Math.floor(Math.random() * Math.max(1, Math.min(3)))
+
+            const testran = randomG();
+
 
             currentRowWeight.push(
-                startPos === false && finishPos === false ? testRan : 0
+                startPos === false && finishPos === false ? testran : 0
             )
 
             // create
             currentRow[c].weight.g =
-                startPos === false && finishPos === false ? testRan : 0
+                startPos === false && finishPos === false ? testran : 0
+
+                currentRow[c].weight.h =
+                startPos === false && finishPos === false ? testran : 0
 
             if (currentRowWeight[c] > 0) {
                 currentRow[c].rangeWeight = `weight-${currentRowWeight[c]}`
